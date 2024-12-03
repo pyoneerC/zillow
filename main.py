@@ -1,13 +1,18 @@
+import requests
 from azure.ai.textanalytics import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
 import azure.cognitiveservices.speech as speechsdk
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 
+# Azure credentials
 TEXT_ANALYTICS_KEY = "EWlQowRIBJZSAqg4Ayd3C5cX8c92s7gYeVpyUXjBdeQ1AkZUAnnmJQQJ99ALACYeBjFXJ3w3AAAEACOGajUF"
 TEXT_ANALYTICS_ENDPOINT = "https://maxcomazureaiservicestest.cognitiveservices.azure.com/"
 SPEECH_KEY = "87xEviM2aOQYL6RadXTILTfTH1xwCQNKB8ea0lOl4sQPvScvcrTHJQQJ99ALACYeBjFXJ3w3AAAEACOGarCv"
 SPEECH_REGION = "eastus"
+TRANSLATOR_ENDPOINT = "https://api.cognitive.microsofttranslator.com/"
+TRANSLATOR_KEY = "4gv2M4jshZd2hM7FDON5Ndi28mgbaqtB4cFRsFvVQia902VkgFeCJQQJ99ALACZoyfiXJ3w3AAAbACOGNGWJ"
+TRANSLATOR_REGION = "brazilsouth"
 
 def authenticate_text_client():
     credential = AzureKeyCredential(TEXT_ANALYTICS_KEY)
@@ -71,6 +76,18 @@ def text_to_speech(text):
     print(f"Speaking: {text}")
     speech_synthesizer.speak_text_async(text).get()
 
+def translate_text_to_spanish(text):
+    headers = {
+        'Ocp-Apim-Subscription-Key': TRANSLATOR_KEY,
+        'Ocp-Apim-Subscription-Region': TRANSLATOR_REGION,
+        'Content-type': 'application/json'
+    }
+    body = [{'text': text}]
+    params = {'api-version': '3.0', 'to': 'es'}
+    response = requests.post(f"{TRANSLATOR_ENDPOINT}translate", headers=headers, params=params, json=body)
+    response.raise_for_status()
+    return response.json()[0]['translations'][0]['text']
+
 def plot_sentiment_scores(confidence_scores):
     scores = {
         "Positive": confidence_scores.positive,
@@ -86,7 +103,7 @@ def plot_sentiment_scores(confidence_scores):
 if __name__ == "__main__":
     text_client = authenticate_text_client()
 
-    print("Azure AI Speech Sentiment Analysis with Insights and Visualization")
+    print("Azure AI Speech Sentiment Analysis with Insights, Visualization, and Translation")
     print("Type 'exit' to quit.\n")
 
     while True:
@@ -116,6 +133,9 @@ if __name__ == "__main__":
             plot_sentiment_scores(confidence_scores)
 
             generate_wordcloud(key_phrases)
+
+            translated_text = translate_text_to_spanish(recognized_text)
+            print(f"Translated Text to Spanish: {translated_text}")
 
         except Exception as e:
             print(f"An error occurred: {e}")
