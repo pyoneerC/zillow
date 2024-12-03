@@ -110,7 +110,5 @@ if __name__ == "__main__":
             # Step 3: Visualize Sentiment Scores
             plot_sentiment_scores(confidence_scores)
 
-            # Step 4: Respond with TTS
-            text_to_speech(sentiment_message)
         except Exception as e:
             print(f"An error occurred: {e}")
