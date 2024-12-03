@@ -2,6 +2,7 @@ from azure.ai.textanalytics import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
 import azure.cognitiveservices.speech as speechsdk
 import matplotlib.pyplot as plt
+from wordcloud import WordCloud
 
 TEXT_ANALYTICS_KEY = "EWlQowRIBJZSAqg4Ayd3C5cX8c92s7gYeVpyUXjBdeQ1AkZUAnnmJQQJ99ALACYeBjFXJ3w3AAAEACOGajUF"
 TEXT_ANALYTICS_ENDPOINT = "https://maxcomazureaiservicestest.cognitiveservices.azure.com/"
@@ -28,6 +29,18 @@ def extract_key_phrases(client, text):
         return []
     return response[0].key_phrases
 
+def generate_wordcloud(key_phrases):
+    if not key_phrases:
+        print("No key phrases available to generate a word cloud.")
+        return
+    wordcloud_text = " ".join(key_phrases)
+    wordcloud = WordCloud(width=800, height=400, background_color="white").generate(wordcloud_text)
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wordcloud, interpolation="bilinear")
+    plt.axis("off")
+    plt.title("Key Phrases Word Cloud")
+    plt.show()
+
 def speech_to_text_from_file(audio_file_path):
     speech_config = speechsdk.SpeechConfig(subscription=SPEECH_KEY, region=SPEECH_REGION)
     audio_input = speechsdk.AudioConfig(filename=audio_file_path)
@@ -39,7 +52,6 @@ def speech_to_text_from_file(audio_file_path):
         print(f"Recognized: {evt.result.text}")
         all_text.append(evt.result.text)
 
-    # Attach the recognized event handler
     speech_recognizer.recognized.connect(handle_recognized)
 
     print("Processing audio file...")
@@ -78,7 +90,6 @@ if __name__ == "__main__":
     print("Type 'exit' to quit.\n")
 
     while True:
-        # Get audio file path
         audio_file_path = input("Enter the path to your audio file (or type 'exit' to quit): ")
         if audio_file_path.lower() == "exit":
             print("Exiting the program. Goodbye!")
@@ -103,6 +114,8 @@ if __name__ == "__main__":
             print(sentiment_message)
 
             plot_sentiment_scores(confidence_scores)
+
+            generate_wordcloud(key_phrases)
 
         except Exception as e:
             print(f"An error occurred: {e}")
