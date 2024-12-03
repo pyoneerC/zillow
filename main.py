@@ -1,6 +1,7 @@
 from azure.ai.textanalytics import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
 import azure.cognitiveservices.speech as speechsdk
+import matplotlib.pyplot as plt
 
 # Azure AI Configuration
 TEXT_ANALYTICS_KEY = "EWlQowRIBJZSAqg4Ayd3C5cX8c92s7gYeVpyUXjBdeQ1AkZUAnnmJQQJ99ALACYeBjFXJ3w3AAAEACOGajUF"
@@ -14,10 +15,22 @@ def authenticate_text_client():
     client = TextAnalyticsClient(endpoint=TEXT_ANALYTICS_ENDPOINT, credential=credential)
     return client
 
-# Analyze Sentiment
+# Analyze Sentiment with Details
 def analyze_sentiment(client, text):
     response = client.analyze_sentiment(documents=[text])[0]
-    return response.sentiment
+    sentiment_details = {
+        "sentiment": response.sentiment,
+        "confidence_scores": response.confidence_scores,
+        "key_phrases": extract_key_phrases(client, text)
+    }
+    return sentiment_details
+
+# Extract Key Phrases
+def extract_key_phrases(client, text):
+    response = client.extract_key_phrases(documents=[text])
+    if response[0].is_error:
+        return []
+    return response[0].key_phrases
 
 # Speech-to-Text from Audio File
 def speech_to_text_from_file(audio_file_path):
@@ -47,11 +60,24 @@ def text_to_speech(text):
     print(f"Speaking: {text}")
     speech_synthesizer.speak_text_async(text).get()
 
+# Plot Sentiment Scores
+def plot_sentiment_scores(confidence_scores):
+    scores = {
+        "Positive": confidence_scores.positive,
+        "Neutral": confidence_scores.neutral,
+        "Negative": confidence_scores.negative
+    }
+    plt.bar(scores.keys(), scores.values())
+    plt.title("Sentiment Confidence Scores")
+    plt.ylabel("Confidence")
+    plt.xlabel("Sentiment Type")
+    plt.show()
+
 if __name__ == "__main__":
     # Authenticate Text Analytics Client
     text_client = authenticate_text_client()
 
-    print("Azure AI Speech Sentiment Analysis from Audio Files")
+    print("Azure AI Speech Sentiment Analysis with Insights and Visualization")
     print("Type 'exit' to quit.\n")
 
     while True:
@@ -68,11 +94,23 @@ if __name__ == "__main__":
 
         # Step 2: Analyze Sentiment
         try:
-            sentiment = analyze_sentiment(text_client, recognized_text)
-            sentiment_message = f"The message you said was {sentiment}."
+            sentiment_details = analyze_sentiment(text_client, recognized_text)
+            sentiment = sentiment_details["sentiment"]
+            confidence_scores = sentiment_details["confidence_scores"]
+            key_phrases = sentiment_details["key_phrases"]
+
+            sentiment_message = (
+                f"The sentiment of the message is {sentiment}.\n"
+                f"Confidence Scores - Positive: {confidence_scores.positive}, "
+                f"Neutral: {confidence_scores.neutral}, Negative: {confidence_scores.negative}\n"
+                f"Key Phrases: {', '.join(key_phrases) if key_phrases else 'No key phrases extracted.'}"
+            )
             print(sentiment_message)
 
-            # Step 3: Respond with TTS
+            # Step 3: Visualize Sentiment Scores
+            plot_sentiment_scores(confidence_scores)
+
+            # Step 4: Respond with TTS
             text_to_speech(sentiment_message)
         except Exception as e:
             print(f"An error occurred: {e}")
