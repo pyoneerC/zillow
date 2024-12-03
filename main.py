@@ -1,9 +1,9 @@
 import requests
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 url = "https://maxcomazureaiservicestest.cognitiveservices.azure.com/customvision/v3.0/Prediction/5c23ffe5-d661-4fa4-be71-6dfbf4c04aac/detect/iterations/Iteration1/image"
 prediction_key = "EWlQowRIBJZSAqg4Ayd3C5cX8c92s7gYeVpyUXjBdeQ1AkZUAnnmJQQJ99ALACYeBjFXJ3w3AAAEACOGajUF"
-image_path = "00000229.jpg"
+image_path = "a.jpg"
 
 with open(image_path, "rb") as image_file:
     image_data = image_file.read()
@@ -29,7 +29,7 @@ if response.status_code == 200:
         bounding_box = prediction["boundingBox"]
         tagId = prediction["tagId"]
 
-        if probability > 0.5:
+        if probability > 0.95:
             left = bounding_box["left"] * image.width
             top = bounding_box["top"] * image.height
             width = bounding_box["width"] * image.width
